@@ -5,11 +5,11 @@ import BoardHeader from "../BoardHeader/BoardHeader";
 interface BoardColumnProps {
   boardId: string;
   title: string;
-  tasks: string[];
+  tasks: Array<{ id: string; title: string; description: string }>;
   index: number;
   editingBoardId: string | null;
   editingTitle: string;
-  newTaskInput: string;
+  newTaskInput: { title: string; description: string };
   onEditTitle: (boardId: string, currentTitle: string) => void;
   onSaveTitle: (boardId: string) => void;
   onTitleChange: (value: string) => void;
@@ -18,7 +18,10 @@ interface BoardColumnProps {
   onDrop: (boardId: string) => void;
   onDeleteTask: (boardId: string, taskIndex: number) => void;
   onDeleteBoard: (boardId: string) => void;
-  onNewTaskChange: (boardId: string, value: string) => void;
+  onNewTaskChange: (
+    boardId: string,
+    value: { title: string; description: string },
+  ) => void;
   onAddTask: (boardId: string) => void;
   getBackgroundColor: (index: number) => string;
 }

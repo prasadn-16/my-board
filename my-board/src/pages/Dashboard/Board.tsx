@@ -2,17 +2,35 @@ import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import BoardColumn from "../../components/BoardColumn/BoardColumn";
 
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+}
+
 interface Board {
   id: string;
   title: string;
-  tasks: string[];
+  tasks: Task[];
 }
 
 const Board = () => {
   const [boards, setBoards] = useState<Board[]>([
-    { id: "1", title: "To Do", tasks: ["Task 1"] },
-    { id: "2", title: "In Progress", tasks: ["Task 2"] },
-    { id: "3", title: "Done", tasks: ["Task 3"] },
+    {
+      id: "1",
+      title: "To Do",
+      tasks: [{ id: uuidv4(), title: "Task 1", description: "" }],
+    },
+    {
+      id: "2",
+      title: "In Progress",
+      tasks: [{ id: uuidv4(), title: "Task 2", description: "" }],
+    },
+    {
+      id: "3",
+      title: "Done",
+      tasks: [{ id: uuidv4(), title: "Task 3", description: "" }],
+    },
   ]);
   const [editingBoardId, setEditingBoardId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>("");
@@ -20,9 +38,9 @@ const Board = () => {
     boardId: string;
     taskIndex: number;
   } | null>(null);
-  const [newTaskInputs, setNewTaskInputs] = useState<Record<string, string>>(
-    {},
-  );
+  const [newTaskInputs, setNewTaskInputs] = useState<
+    Record<string, { title: string; description: string }>
+  >({});
 
   const handleAddBoard = () => {
     const newBoard: Board = {
@@ -91,18 +109,28 @@ const Board = () => {
   };
 
   const handleAddTask = (boardId: string) => {
-    const taskText = newTaskInputs[boardId]?.trim();
-    if (!taskText) return;
+    const taskInput = newTaskInputs[boardId];
+    const taskTitle = taskInput?.title?.trim();
+    if (!taskTitle) return;
+
+    const newTask: Task = {
+      id: uuidv4(),
+      title: taskTitle,
+      description: taskInput?.description?.trim() || "",
+    };
 
     setBoards(
       boards.map((board) =>
         board.id === boardId
-          ? { ...board, tasks: [...board.tasks, taskText] }
+          ? { ...board, tasks: [...board.tasks, newTask] }
           : board,
       ),
     );
 
-    setNewTaskInputs({ ...newTaskInputs, [boardId]: "" });
+    setNewTaskInputs({
+      ...newTaskInputs,
+      [boardId]: { title: "", description: "" },
+    });
   };
 
   const handleDeleteTask = (boardId: string, taskIndex: number) => {
@@ -159,7 +187,9 @@ const Board = () => {
             index={index}
             editingBoardId={editingBoardId}
             editingTitle={editingTitle}
-            newTaskInput={newTaskInputs[board.id] || ""}
+            newTaskInput={
+              newTaskInputs[board.id] || { title: "", description: "" }
+            }
             onEditTitle={handleEditTitle}
             onSaveTitle={handleSaveTitle}
             onTitleChange={setEditingTitle}
