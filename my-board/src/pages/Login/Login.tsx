@@ -1,12 +1,20 @@
+import { useNavigate } from "react-router-dom";
+
 const Login = () => {
+  const navigate = useNavigate();
+
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     // Handle login logic here
     console.log("Form submitted");
   };
 
+  const handleSignUp = () => {
+    navigate("/board");
+  };
+
   return (
-    <section className="p-4 w-full min-h-screen flex items-center justify-center transition-colors duration-300 bg-gray-100 text-gray-900">
+    <section className="login p-4 w-full min-h-screen flex items-center justify-center transition-colors duration-300 bg-gray-100 text-gray-900">
       <div
         className="p-15 rounded-2xl shadow-xl border transition-colors duration-300 bg-white text-gray-900 border-gray-200"
         role="region"
@@ -25,7 +33,6 @@ const Login = () => {
               Email address
             </label>
             <input
-              required
               id="email"
               type="email"
               className="mt-1 w-full px-4 py-2 rounded-lg border bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -37,7 +44,6 @@ const Login = () => {
               Password
             </label>
             <input
-              required
               id="password"
               type="password"
               className="mt-1 w-full px-4 py-2 rounded-lg border bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -59,6 +65,14 @@ const Login = () => {
             className="w-full py-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           >
             Sign in
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSignUp}
+            className="w-full py-2.5 rounded-lg bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 focus:outline-none"
+          >
+            Sign up
           </button>
         </form>
       </div>
