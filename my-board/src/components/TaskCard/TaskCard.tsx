@@ -1,17 +1,4 @@
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-}
-
-interface TaskCardProps {
-  task: Task;
-  taskIndex: number;
-  boardId: string;
-  backgroundColor: string;
-  onDragStart: (boardId: string, taskIndex: number) => void;
-  onDelete: (boardId: string, taskIndex: number) => void;
-}
+import type { TaskCardProps } from "../../types/types";
 
 const TaskCard = ({
   task,

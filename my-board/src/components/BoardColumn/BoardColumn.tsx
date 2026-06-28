@@ -1,30 +1,7 @@
 import TaskCard from "../TaskCard/TaskCard";
 import AddTaskInput from "../AddTaskInput/AddTaskInput";
 import BoardHeader from "../BoardHeader/BoardHeader";
-
-interface BoardColumnProps {
-  boardId: string;
-  title: string;
-  tasks: Array<{ id: string; title: string; description: string }>;
-  index: number;
-  editingBoardId: string | null;
-  editingTitle: string;
-  newTaskInput: { title: string; description: string };
-  onEditTitle: (boardId: string, currentTitle: string) => void;
-  onSaveTitle: (boardId: string) => void;
-  onTitleChange: (value: string) => void;
-  onDragStart: (boardId: string, taskIndex: number) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (boardId: string) => void;
-  onDeleteTask: (boardId: string, taskIndex: number) => void;
-  onDeleteBoard: (boardId: string) => void;
-  onNewTaskChange: (
-    boardId: string,
-    value: { title: string; description: string },
-  ) => void;
-  onAddTask: (boardId: string) => void;
-  getBackgroundColor: (index: number) => string;
-}
+import type { BoardColumnProps } from "../../types/types";
 
 const BoardColumn = ({
   boardId,
@@ -52,7 +29,6 @@ const BoardColumn = ({
       onDragOver={onDragOver}
       onDrop={() => onDrop(boardId)}
     >
-      {/* Board Header */}
       <BoardHeader
         boardId={boardId}
         title={title}
@@ -64,7 +40,6 @@ const BoardColumn = ({
         onDelete={onDeleteBoard}
       />
 
-      {/* Tasks */}
       <div className="space-y-3 mb-4">
         {tasks.map((task, taskIndex) => (
           <TaskCard
@@ -79,7 +54,6 @@ const BoardColumn = ({
         ))}
       </div>
 
-      {/* Add Task Input */}
       <AddTaskInput
         boardId={boardId}
         value={newTaskInput}

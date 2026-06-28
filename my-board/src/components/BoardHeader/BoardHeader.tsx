@@ -1,13 +1,4 @@
-interface BoardHeaderProps {
-  boardId: string;
-  title: string;
-  isEditing: boolean;
-  editingTitle: string;
-  onEdit: (boardId: string, currentTitle: string) => void;
-  onSave: (boardId: string) => void;
-  onTitleChange: (value: string) => void;
-  onDelete: (boardId: string) => void;
-}
+import type { BoardHeaderProps } from "../../types/types";
 
 const BoardHeader = ({
   boardId,

@@ -1,35 +1,26 @@
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import BoardColumn from "../../components/BoardColumn/BoardColumn";
+import type { Task } from "../../types/types";
+import type { Board } from "../../types/types";
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-}
-
-interface Board {
-  id: string;
-  title: string;
-  tasks: Task[];
-}
-
-const Board = () => {
+const MainBoard = () => {
+  const id = uuidv4();
   const [boards, setBoards] = useState<Board[]>([
     {
       id: "1",
       title: "To Do",
-      tasks: [{ id: uuidv4(), title: "Task 1", description: "" }],
+      tasks: [{ id: id, title: "Task 1", description: "" }],
     },
     {
       id: "2",
       title: "In Progress",
-      tasks: [{ id: uuidv4(), title: "Task 2", description: "" }],
+      tasks: [{ id: id, title: "Task 2", description: "" }],
     },
     {
       id: "3",
       title: "Done",
-      tasks: [{ id: uuidv4(), title: "Task 3", description: "" }],
+      tasks: [{ id: id, title: "Task 3", description: "" }],
     },
   ]);
   const [editingBoardId, setEditingBoardId] = useState<string | null>(null);
@@ -44,7 +35,7 @@ const Board = () => {
 
   const handleAddBoard = () => {
     const newBoard: Board = {
-      id: uuidv4(),
+      id: id,
       title: `Board ${boards.length + 1}`,
       tasks: [],
     };
@@ -114,7 +105,7 @@ const Board = () => {
     if (!taskTitle) return;
 
     const newTask: Task = {
-      id: uuidv4(),
+      id: id,
       title: taskTitle,
       description: taskInput?.description?.trim() || "",
     };
@@ -210,4 +201,4 @@ const Board = () => {
   );
 };
 
-export default Board;
+export default MainBoard;

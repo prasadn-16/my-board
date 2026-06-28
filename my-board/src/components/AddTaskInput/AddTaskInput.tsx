@@ -1,12 +1,4 @@
-interface AddTaskInputProps {
-  boardId: string;
-  value: { title: string; description: string };
-  onChange: (
-    boardId: string,
-    value: { title: string; description: string },
-  ) => void;
-  onAdd: (boardId: string) => void;
-}
+import type { AddTaskInputProps } from "../../types/types";
 
 const AddTaskInput = ({
   boardId,
