@@ -1,26 +1,25 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
 import BoardColumn from "../../components/BoardColumn/BoardColumn";
 import type { Task } from "../../types/types";
 import type { Board } from "../../types/types";
 
 const MainBoard = () => {
-  const id = uuidv4();
   const [boards, setBoards] = useState<Board[]>([
     {
       id: "1",
       title: "To Do",
-      tasks: [{ id: id, title: "Task 1", description: "" }],
+      tasks: [{ id: uuidv4(), title: "Task 1", description: "" }],
     },
     {
       id: "2",
       title: "In Progress",
-      tasks: [{ id: id, title: "Task 2", description: "" }],
+      tasks: [{ id: uuidv4(), title: "Task 2", description: "" }],
     },
     {
       id: "3",
       title: "Done",
-      tasks: [{ id: id, title: "Task 3", description: "" }],
+      tasks: [{ id: uuidv4(), title: "Task 3", description: "" }],
     },
   ]);
   const [editingBoardId, setEditingBoardId] = useState<string | null>(null);
@@ -33,100 +32,120 @@ const MainBoard = () => {
     Record<string, { title: string; description: string }>
   >({});
 
-  const handleAddBoard = () => {
+  // 1. Wrap with useCallback
+  const handleAddBoard = useCallback(() => {
     const newBoard: Board = {
-      id: id,
+      id: uuidv4(), // Use a fresh ID here instead of the top-level one
       title: `Board ${boards.length + 1}`,
       tasks: [],
     };
-    setBoards([...boards, newBoard]);
-  };
+    setBoards((prev) => [...prev, newBoard]);
+  }, [boards.length]);
 
-  const handleEditTitle = (boardId: string, currentTitle: string) => {
-    setEditingBoardId(boardId);
-    setEditingTitle(currentTitle);
-  };
+  // 2. Wrap with useCallback
+  const handleEditTitle = useCallback(
+    (boardId: string, currentTitle: string) => {
+      setEditingBoardId(boardId);
+      setEditingTitle(currentTitle);
+    },
+    [],
+  );
 
-  const handleSaveTitle = (boardId: string) => {
-    setBoards(
-      boards.map((board) =>
-        board.id === boardId ? { ...board, title: editingTitle } : board,
-      ),
-    );
-    setEditingBoardId(null);
-    setEditingTitle("");
-  };
+  // 3. Wrap with useCallback (depends on editingTitle)
+  const handleSaveTitle = useCallback(
+    (boardId: string) => {
+      setBoards((prev) =>
+        prev.map((board) =>
+          board.id === boardId ? { ...board, title: editingTitle } : board,
+        ),
+      );
+      setEditingBoardId(null);
+      setEditingTitle("");
+    },
+    [editingTitle],
+  );
 
-  const handleDragStart = (boardId: string, taskIndex: number) => {
+  // 4. Wrap with useCallback
+  const handleDragStart = useCallback((boardId: string, taskIndex: number) => {
     setDraggedTask({ boardId, taskIndex });
-  };
+  }, []);
 
-  const handleDragOver = (e: React.DragEvent) => {
+  // 5. Wrap with useCallback
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-  };
+  }, []);
 
-  const handleDropTask = (targetBoardId: string) => {
-    if (!draggedTask) return;
+  // 6. Wrap with useCallback (depends on boards and draggedTask)
+  const handleDropTask = useCallback(
+    (targetBoardId: string) => {
+      if (!draggedTask) return;
 
-    const sourceBoard = boards.find((b) => b.id === draggedTask.boardId);
-    if (!sourceBoard) return;
+      const sourceBoard = boards.find((b) => b.id === draggedTask.boardId);
+      if (!sourceBoard) return;
 
-    const draggedTaskText = sourceBoard.tasks[draggedTask.taskIndex];
+      const draggedTaskText = sourceBoard.tasks[draggedTask.taskIndex];
 
-    // Remove task from source board
-    setBoards(
-      boards.map((board) =>
-        board.id === draggedTask.boardId
-          ? {
-              ...board,
-              tasks: board.tasks.filter(
-                (_, idx) => idx !== draggedTask.taskIndex,
-              ),
-            }
-          : board,
-      ),
-    );
+      // Remove task from source board
+      setBoards((prev) =>
+        prev.map((board) =>
+          board.id === draggedTask.boardId
+            ? {
+                ...board,
+                tasks: board.tasks.filter(
+                  (_, idx) => idx !== draggedTask.taskIndex,
+                ),
+              }
+            : board,
+        ),
+      );
 
-    // Add task to target board
-    setBoards((prevBoards) =>
-      prevBoards.map((board) =>
-        board.id === targetBoardId
-          ? { ...board, tasks: [...board.tasks, draggedTaskText] }
-          : board,
-      ),
-    );
+      // Add task to target board
+      setBoards((prevBoards) =>
+        prevBoards.map((board) =>
+          board.id === targetBoardId
+            ? { ...board, tasks: [...board.tasks, draggedTaskText] }
+            : board,
+        ),
+      );
 
-    setDraggedTask(null);
-  };
+      setDraggedTask(null);
+    },
+    [draggedTask, boards],
+  );
 
-  const handleAddTask = (boardId: string) => {
-    const taskInput = newTaskInputs[boardId];
-    const taskTitle = taskInput?.title?.trim();
-    if (!taskTitle) return;
+  const handleAddTask = useCallback(
+    (boardId: string) => {
+      const taskInput = newTaskInputs[boardId];
+      const taskTitle = taskInput?.title?.trim();
 
-    const newTask: Task = {
-      id: id,
-      title: taskTitle,
-      description: taskInput?.description?.trim() || "",
-    };
+      if (!taskTitle) return;
 
+      const newTask: Task = {
+        id: uuidv4(),
+        title: taskTitle,
+        description: taskInput?.description?.trim() || "",
+      };
+
+      setBoards((prevBoards) =>
+        prevBoards.map((board) =>
+          board.id === boardId
+            ? { ...board, tasks: [...board.tasks, newTask] }
+            : board,
+        ),
+      );
+
+      setNewTaskInputs((prevInputs) => ({
+        ...prevInputs,
+        [boardId]: { title: "", description: "" },
+      }));
+    },
+    [newTaskInputs],
+  );
+
+  // 8. Wrap with useCallback
+  const handleDeleteTask = useCallback((boardId: string, taskIndex: number) => {
     setBoards((prev) =>
       prev.map((board) =>
-        board.id === boardId
-          ? { ...board, tasks: [...board.tasks, newTask] }
-          : board,
-      ),
-    );
-
-    setNewTaskInputs({
-      ...newTaskInputs,
-      [boardId]: { title: "", description: "" },
-    });
-  };
-
-  const handleDeleteTask = (boardId: string, taskIndex: number) => {
-    setBoards(
-      boards.map((board) =>
         board.id === boardId
           ? {
               ...board,
@@ -135,13 +154,23 @@ const MainBoard = () => {
           : board,
       ),
     );
-  };
+  }, []);
 
-  const handleDeleteBoard = (boardId: string) => {
-    setBoards(boards.filter((board) => board.id !== boardId));
-  };
+  // 9. Converted to use `prev` and wrapped in useCallback
+  const handleDeleteBoard = useCallback((boardId: string) => {
+    setBoards((prev) => prev.filter((board) => board.id !== boardId));
+  }, []);
 
-  const getBackgroundColor = (index: number) => {
+  // 10. Extracted inline function from JSX into memoized callback
+  const handleNewTaskChange = useCallback(
+    (boardId: string, value: { title: string; description: string }) => {
+      setNewTaskInputs((prev) => ({ ...prev, [boardId]: value }));
+    },
+    [],
+  );
+
+  // 11. Wrap with useCallback
+  const getBackgroundColor = useCallback((index: number) => {
     const colors = [
       "bg-blue-100",
       "bg-yellow-100",
@@ -151,7 +180,7 @@ const MainBoard = () => {
       "bg-orange-100",
     ];
     return colors[index % colors.length];
-  };
+  }, []);
 
   return (
     <section className="board p-4 w-full min-h-screen bg-gray-100 text-gray-900">
@@ -183,15 +212,13 @@ const MainBoard = () => {
             }
             onEditTitle={handleEditTitle}
             onSaveTitle={handleSaveTitle}
-            onTitleChange={setEditingTitle}
+            onTitleChange={setEditingTitle} // useState setter, already memoized
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDropTask}
             onDeleteTask={handleDeleteTask}
             onDeleteBoard={handleDeleteBoard}
-            onNewTaskChange={(boardId, value) =>
-              setNewTaskInputs({ ...newTaskInputs, [boardId]: value })
-            }
+            onNewTaskChange={handleNewTaskChange} // Now references the memoized function
             onAddTask={handleAddTask}
             getBackgroundColor={getBackgroundColor}
           />
