@@ -110,8 +110,8 @@ const MainBoard = () => {
       description: taskInput?.description?.trim() || "",
     };
 
-    setBoards(
-      boards.map((board) =>
+    setBoards((prev) =>
+      prev.map((board) =>
         board.id === boardId
           ? { ...board, tasks: [...board.tasks, newTask] }
           : board,
