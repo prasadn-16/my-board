@@ -1,21 +1,12 @@
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../store/store";
-import {
-  startEditingTitle,
-  setEditingTitle,
-  saveBoardTitle,
-  deleteBoard,
-} from "../../store/boardSlice";
+import { startEditingTitle, setEditingTitle, saveBoardTitle, deleteBoard } from "../../store/boardSlice";
 import type { BoardHeaderProps } from "../../types/types";
 
 const BoardHeader = ({ boardId, title }: BoardHeaderProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const isEditing = useSelector(
-    (state: RootState) => state.board.editingBoardId === boardId,
-  );
-  const editingTitle = useSelector(
-    (state: RootState) => state.board.editingTitle,
-  );
+  const isEditing = useSelector((state: RootState) => state.board.editingBoardId === boardId);
+  const editingTitle = useSelector((state: RootState) => state.board.editingTitle);
 
   return (
     <>

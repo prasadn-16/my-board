@@ -9,20 +9,13 @@ import type { BoardColumnProps } from "../../types/types";
 const BoardColumn = ({ boardId, index }: BoardColumnProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const board = useSelector((state: RootState) =>
-    state.board.boards.find((b) => b.id === boardId),
+    state.board.boards.find((b) => b.id === boardId)
   );
 
   if (!board) return null;
 
   const getBackgroundColor = (idx: number) => {
-    const colors = [
-      "bg-blue-100",
-      "bg-yellow-100",
-      "bg-green-100",
-      "bg-purple-100",
-      "bg-pink-100",
-      "bg-orange-100",
-    ];
+    const colors = ["bg-blue-100", "bg-yellow-100", "bg-green-100", "bg-purple-100", "bg-pink-100", "bg-orange-100"];
     return colors[idx % colors.length];
   };
 

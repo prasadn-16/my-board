@@ -3,12 +3,7 @@ import type { AppDispatch } from "../../store/store";
 import { setDraggedTask, deleteTask } from "../../store/boardSlice";
 import type { TaskCardProps } from "../../types/types";
 
-const TaskCard = ({
-  task,
-  taskIndex,
-  boardId,
-  backgroundColor,
-}: TaskCardProps) => {
+const TaskCard = ({ task, taskIndex, boardId, backgroundColor }: TaskCardProps) => {
   const dispatch = useDispatch<AppDispatch>();
 
   return (
@@ -25,7 +20,7 @@ const TaskCard = ({
       </div>
       <button
         onClick={() => dispatch(deleteTask({ boardId, taskIndex }))}
-        className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800 text-sm font-bold transition-opacity flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800 text-sm font-bold transition-opacity shrink-0"
       >
         ✕
       </button>
