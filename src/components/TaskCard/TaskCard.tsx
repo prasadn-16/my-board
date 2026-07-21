@@ -1,7 +1,7 @@
 import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../store/store";
-import { setDraggedTask, deleteTask } from "../../store/boardSlice";
-import type { TaskCardProps } from "../../types/types";
+import type { AppDispatch } from "@/store/store";
+import { setDraggedTask, deleteTask } from "@/store/boardSlice";
+import type { TaskCardProps } from "@/types/types";
 
 const TaskCard = ({ task, taskIndex, boardId, backgroundColor }: TaskCardProps) => {
   const dispatch = useDispatch<AppDispatch>();

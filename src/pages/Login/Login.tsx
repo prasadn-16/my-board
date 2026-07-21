@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { auth } from "../../firebase/firebase";
+import { auth } from "@/firebase/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -13,7 +13,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   // One single submit handler that checks the current mode
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -74,6 +74,7 @@ const Login = () => {
             </label>
             <input
               id="password"
+              autoComplete={isLoginMode ? "current-password" : "new-password"}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

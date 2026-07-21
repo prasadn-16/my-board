@@ -1,9 +1,9 @@
 import { useSelector, useDispatch } from "react-redux";
 import { signOut } from "firebase/auth";
-import { auth } from "../../firebase/firebase";
-import type { RootState, AppDispatch } from "../../store/store";
-import { addBoard } from "../../store/boardSlice";
-import BoardColumn from "../../components/BoardColumn/BoardColumn";
+import { auth } from "@/firebase/firebase";
+import type { RootState, AppDispatch } from "@/store/store";
+import { addBoard } from "@/store/boardSlice";
+import BoardColumn from "@/components/BoardColumn/BoardColumn";
 
 const MainBoard = () => {
   const dispatch = useDispatch<AppDispatch>();

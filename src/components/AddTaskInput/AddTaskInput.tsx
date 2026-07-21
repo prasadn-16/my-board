@@ -1,12 +1,13 @@
 import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../../store/store";
-import { updateNewTaskInput, addTask } from "../../store/boardSlice";
-import type { AddTaskInputProps } from "../../types/types";
+import type { RootState, AppDispatch } from "@/store/store";
+import { updateNewTaskInput, addTask } from "@/store/boardSlice";
+import type { AddTaskInputProps } from "@/types/types";
 
+const defaultInput = { title: "", description: "" };
 const AddTaskInput = ({ boardId }: AddTaskInputProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const value = useSelector(
-    (state: RootState) => state.board.newTaskInputs[boardId] || { title: "", description: "" }
+    (state: RootState) => state.board.newTaskInputs[boardId] || defaultInput,
   );
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -21,14 +22,28 @@ const AddTaskInput = ({ boardId }: AddTaskInputProps) => {
         type="text"
         placeholder="Task title..."
         value={value.title}
-        onChange={(e) => dispatch(updateNewTaskInput({ boardId, value: { ...value, title: e.target.value } }))}
+        onChange={(e) =>
+          dispatch(
+            updateNewTaskInput({
+              boardId,
+              value: { ...value, title: e.target.value },
+            }),
+          )
+        }
         onKeyDown={handleKeyPress}
         className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />
       <textarea
         placeholder="Task description (optional)..."
         value={value.description}
-        onChange={(e) => dispatch(updateNewTaskInput({ boardId, value: { ...value, description: e.target.value } }))}
+        onChange={(e) =>
+          dispatch(
+            updateNewTaskInput({
+              boardId,
+              value: { ...value, description: e.target.value },
+            }),
+          )
+        }
         className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-16"
       />
       <button

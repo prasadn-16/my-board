@@ -1,10 +1,10 @@
 import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../../store/store";
-import { dropTask } from "../../store/boardSlice";
+import type { RootState, AppDispatch } from "@/store/store";
+import { dropTask } from "@/store/boardSlice";
 import TaskCard from "../TaskCard/TaskCard";
 import AddTaskInput from "../AddTaskInput/AddTaskInput";
 import BoardHeader from "../BoardHeader/BoardHeader";
-import type { BoardColumnProps } from "../../types/types";
+import type { BoardColumnProps } from "@/types/types";
 
 const BoardColumn = ({ boardId, index }: BoardColumnProps) => {
   const dispatch = useDispatch<AppDispatch>();

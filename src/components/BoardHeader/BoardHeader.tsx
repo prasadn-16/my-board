@@ -1,7 +1,12 @@
 import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../../store/store";
-import { startEditingTitle, setEditingTitle, saveBoardTitle, deleteBoard } from "../../store/boardSlice";
-import type { BoardHeaderProps } from "../../types/types";
+import type { RootState, AppDispatch } from "@/store/store";
+import {
+  startEditingTitle,
+  setEditingTitle,
+  saveBoardTitle,
+  deleteBoard,
+} from "@/store/boardSlice";
+import type { BoardHeaderProps } from "@/types/types";
 
 const BoardHeader = ({ boardId, title }: BoardHeaderProps) => {
   const dispatch = useDispatch<AppDispatch>();
