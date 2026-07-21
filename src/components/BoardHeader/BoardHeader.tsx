@@ -1,15 +1,18 @@
-import type { BoardHeaderProps } from "../../types/types";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "@/store/store";
+import {
+  startEditingTitle,
+  setEditingTitle,
+  saveBoardTitle,
+  deleteBoard,
+} from "@/store/boardSlice";
+import type { BoardHeaderProps } from "@/types/types";
 
-const BoardHeader = ({
-  boardId,
-  title,
-  isEditing,
-  editingTitle,
-  onEdit,
-  onSave,
-  onTitleChange,
-  onDelete,
-}: BoardHeaderProps) => {
+const BoardHeader = ({ boardId, title }: BoardHeaderProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const isEditing = useSelector((state: RootState) => state.board.editingBoardId === boardId);
+  const editingTitle = useSelector((state: RootState) => state.board.editingTitle);
+
   return (
     <>
       {isEditing ? (
@@ -17,12 +20,12 @@ const BoardHeader = ({
           <input
             type="text"
             value={editingTitle}
-            onChange={(e) => onTitleChange(e.target.value)}
+            onChange={(e) => dispatch(setEditingTitle(e.target.value))}
             className="flex-1 px-2 py-1 border border-gray-300 rounded text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
             autoFocus
           />
           <button
-            onClick={() => onSave(boardId)}
+            onClick={() => dispatch(saveBoardTitle(boardId))}
             className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium"
           >
             Save
@@ -31,13 +34,13 @@ const BoardHeader = ({
       ) : (
         <div className="flex justify-between items-center mb-4 group">
           <div
-            onClick={() => onEdit(boardId, title)}
+            onClick={() => dispatch(startEditingTitle({ boardId, title }))}
             className="text-xl font-semibold cursor-pointer hover:text-indigo-600 transition-colors flex-1"
           >
             {title}
           </div>
           <button
-            onClick={() => onDelete(boardId)}
+            onClick={() => dispatch(deleteBoard(boardId))}
             className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800 text-sm font-bold transition-opacity"
           >
             ✕
