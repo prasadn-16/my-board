@@ -1,7 +1,8 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { AuthUser } from "@/types/types";
 
 interface AuthState {
-  user: { uid: string; email: string | null } | null;
+  user: AuthUser | null;
   loading: boolean;
 }
 
@@ -18,7 +19,12 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<{ uid: string; email: string | null }>,
     ) => {
-      state.user = action.payload;
+      // Mocking role assignment: emails containing 'admin' get the admin role.
+      // In production, fetch this from Firestore/Custom Claims.
+      const role = action.payload.email?.toLowerCase().includes("admin")
+        ? "admin"
+        : "user";
+      state.user = { ...action.payload, role };
       state.loading = false;
     },
     clearUser: (state) => {

@@ -1,36 +1,58 @@
 import { useSelector, useDispatch } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
 import type { RootState, AppDispatch } from "@/store/store";
 import { updateNewTaskInput, addTask } from "@/store/boardSlice";
 import type { AddTaskInputProps } from "@/types/types";
 
-const defaultInput = { title: "", description: "" };
+const defaultInput = { title: "", description: "", assignee: "" };
+
 const AddTaskInput = ({ boardId }: AddTaskInputProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const value = useSelector(
     (state: RootState) => state.board.newTaskInputs[boardId] || defaultInput,
   );
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      dispatch(addTask(boardId));
+  // Grab the current user
+  const user = useSelector((state: RootState) => state.auth.user);
+  const isAdmin = user?.role === "admin";
+
+  const isTitleEmpty = !value.title.trim();
+
+  const submitTask = () => {
+    if (!isTitleEmpty) {
+      dispatch(
+        addTask({
+          boardId,
+          task: {
+            id: uuidv4(),
+            title: value.title.trim(),
+            description: value.description?.trim() || "",
+            completed: false,
+            // AUTO-ASSIGN LOGIC: If admin, leave unassigned. If normal user, assign to them.
+            assignee: isAdmin ? null : user?.email || null,
+          },
+        }),
+      );
     }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !isTitleEmpty) submitTask();
   };
 
   return (
     <div className="task space-y-2">
       <input
         type="text"
-        placeholder="Task title..."
+        placeholder="Task title (Required)..."
         value={value.title}
         onChange={(e) =>
           dispatch(
-            updateNewTaskInput({
-              boardId,
-              value: { ...value, title: e.target.value },
-            }),
+            updateNewTaskInput({ boardId, value: { title: e.target.value } }),
           )
         }
         onKeyDown={handleKeyPress}
+        required
         className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />
       <textarea
@@ -40,15 +62,16 @@ const AddTaskInput = ({ boardId }: AddTaskInputProps) => {
           dispatch(
             updateNewTaskInput({
               boardId,
-              value: { ...value, description: e.target.value },
+              value: { description: e.target.value },
             }),
           )
         }
         className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-16"
       />
       <button
-        onClick={() => dispatch(addTask(boardId))}
-        className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium"
+        onClick={submitTask}
+        disabled={isTitleEmpty}
+        className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
       >
         Add Task
       </button>

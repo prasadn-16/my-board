@@ -1,13 +1,17 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
-import type { Board } from "../types/types";
+import type { Board, Task, ActivityLog } from "../types/types";
 
 interface BoardState {
   boards: Board[];
+  logs: ActivityLog[];
   editingBoardId: string | null;
   editingTitle: string;
   draggedTask: { boardId: string; taskIndex: number } | null;
-  newTaskInputs: Record<string, { title: string; description: string }>;
+  newTaskInputs: Record<
+    string,
+    { title: string; description: string; assignee: string }
+  >;
 }
 
 const initialState: BoardState = {
@@ -15,19 +19,18 @@ const initialState: BoardState = {
     {
       id: "1",
       title: "To Do",
-      tasks: [{ id: uuidv4(), title: "Task 1", description: "" }],
-    },
-    {
-      id: "2",
-      title: "In Progress",
-      tasks: [{ id: uuidv4(), title: "Task 2", description: "" }],
-    },
-    {
-      id: "3",
-      title: "Done",
-      tasks: [{ id: uuidv4(), title: "Task 3", description: "" }],
+      tasks: [
+        {
+          id: uuidv4(),
+          title: "Setup Project",
+          description: "Initialize Vite app",
+          completed: false,
+          assignee: null,
+        },
+      ],
     },
   ],
+  logs: [],
   editingBoardId: null,
   editingTitle: "",
   draggedTask: null,
@@ -38,16 +41,41 @@ const boardSlice = createSlice({
   name: "board",
   initialState,
   reducers: {
-    addBoard: (state) => {
+    addLog: (state, action: PayloadAction<ActivityLog>) => {
+      state.logs.unshift(action.payload);
+      if (state.logs.length > 50) state.logs.pop();
+    },
+    setLogs: (state, action: PayloadAction<ActivityLog[]>) => {
+      state.logs = action.payload;
+    },
+    setEntireBoardState: (
+      state,
+      action: PayloadAction<Partial<BoardState>>,
+    ) => {
+      if (action.payload.boards) state.boards = action.payload.boards;
+      if (action.payload.newTaskInputs)
+        state.newTaskInputs = action.payload.newTaskInputs;
+    },
+    addBoard: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        title: string;
+        fromSocket?: boolean;
+      }>,
+    ) => {
       state.boards.push({
-        id: uuidv4(),
-        title: `Board ${state.boards.length + 1}`,
+        id: action.payload.id,
+        title: action.payload.title,
         tasks: [],
       });
     },
-    deleteBoard: (state, action: PayloadAction<string>) => {
+    deleteBoard: (
+      state,
+      action: PayloadAction<{ boardId: string; fromSocket?: boolean }>,
+    ) => {
       state.boards = state.boards.filter(
-        (board) => board.id !== action.payload,
+        (board) => board.id !== action.payload.boardId,
       );
     },
     startEditingTitle: (
@@ -60,11 +88,16 @@ const boardSlice = createSlice({
     setEditingTitle: (state, action: PayloadAction<string>) => {
       state.editingTitle = action.payload;
     },
-    saveBoardTitle: (state, action: PayloadAction<string>) => {
-      const board = state.boards.find((b) => b.id === action.payload);
-      if (board) {
-        board.title = state.editingTitle;
-      }
+    saveBoardTitle: (
+      state,
+      action: PayloadAction<{
+        boardId: string;
+        title?: string;
+        fromSocket?: boolean;
+      }>,
+    ) => {
+      const board = state.boards.find((b) => b.id === action.payload.boardId);
+      if (board) board.title = action.payload.title || state.editingTitle;
       state.editingBoardId = null;
       state.editingTitle = "";
     },
@@ -74,61 +107,101 @@ const boardSlice = createSlice({
     ) => {
       state.draggedTask = action.payload;
     },
-    dropTask: (state, action: PayloadAction<string>) => {
-      const targetBoardId = action.payload;
-      if (!state.draggedTask) return;
-
-      const sourceBoard = state.boards.find(
-        (b) => b.id === state.draggedTask!.boardId,
-      );
-      const targetBoard = state.boards.find((b) => b.id === targetBoardId);
-
-      if (sourceBoard && targetBoard) {
-        const taskToMove = sourceBoard.tasks[state.draggedTask.taskIndex];
-        sourceBoard.tasks.splice(state.draggedTask.taskIndex, 1);
-        targetBoard.tasks.push(taskToMove);
-      }
-      state.draggedTask = null;
-    },
     updateNewTaskInput: (
       state,
       action: PayloadAction<{
         boardId: string;
-        value: { title: string; description: string };
+        value: Partial<{
+          title: string;
+          description: string;
+          assignee: string;
+        }>;
       }>,
     ) => {
-      state.newTaskInputs[action.payload.boardId] = action.payload.value;
+      const current = state.newTaskInputs[action.payload.boardId] || {
+        title: "",
+        description: "",
+        assignee: "",
+      };
+      state.newTaskInputs[action.payload.boardId] = {
+        ...current,
+        ...action.payload.value,
+      };
     },
-    addTask: (state, action: PayloadAction<string>) => {
-      const boardId = action.payload;
-      const input = state.newTaskInputs[boardId];
-      const taskTitle = input?.title?.trim();
+    dropTask: (
+      state,
+      action: PayloadAction<{
+        targetBoardId: string;
+        sourceBoardId: string;
+        taskIndex: number;
+        fromSocket?: boolean;
+      }>,
+    ) => {
+      const { sourceBoardId, targetBoardId, taskIndex } = action.payload;
+      const sourceBoard = state.boards.find((b) => b.id === sourceBoardId);
+      const targetBoard = state.boards.find((b) => b.id === targetBoardId);
 
-      if (taskTitle) {
-        const board = state.boards.find((b) => b.id === boardId);
-        if (board) {
-          board.tasks.push({
-            id: uuidv4(),
-            title: taskTitle,
-            description: input.description?.trim() || "",
-          });
+      if (sourceBoard && targetBoard) {
+        const [taskToMove] = sourceBoard.tasks.splice(taskIndex, 1);
+        targetBoard.tasks.push(taskToMove);
+      }
+      state.draggedTask = null;
+    },
+    addTask: (
+      state,
+      action: PayloadAction<{
+        boardId: string;
+        task: Task;
+        fromSocket?: boolean;
+      }>,
+    ) => {
+      const board = state.boards.find((b) => b.id === action.payload.boardId);
+      if (board) {
+        board.tasks.push(action.payload.task);
+        if (!action.payload.fromSocket) {
+          state.newTaskInputs[action.payload.boardId] = {
+            title: "",
+            description: "",
+            assignee: "",
+          };
         }
-        state.newTaskInputs[boardId] = { title: "", description: "" };
+      }
+    },
+    updateTask: (
+      state,
+      action: PayloadAction<{
+        boardId: string;
+        taskIndex: number;
+        updates: Partial<Task>;
+        fromSocket?: boolean;
+      }>,
+    ) => {
+      const board = state.boards.find((b) => b.id === action.payload.boardId);
+      if (board && board.tasks[action.payload.taskIndex]) {
+        board.tasks[action.payload.taskIndex] = {
+          ...board.tasks[action.payload.taskIndex],
+          ...action.payload.updates,
+        };
       }
     },
     deleteTask: (
       state,
-      action: PayloadAction<{ boardId: string; taskIndex: number }>,
+      action: PayloadAction<{
+        boardId: string;
+        taskIndex: number;
+        fromSocket?: boolean;
+      }>,
     ) => {
       const board = state.boards.find((b) => b.id === action.payload.boardId);
-      if (board) {
-        board.tasks.splice(action.payload.taskIndex, 1);
-      }
+      if (board) board.tasks.splice(action.payload.taskIndex, 1);
     },
   },
 });
 
 export const {
+  addLog,
+  setLogs,
+  setEntireBoardState,
   addBoard,
   deleteBoard,
   startEditingTitle,
@@ -138,6 +211,7 @@ export const {
   dropTask,
   updateNewTaskInput,
   addTask,
+  updateTask,
   deleteTask,
 } = boardSlice.actions;
 
