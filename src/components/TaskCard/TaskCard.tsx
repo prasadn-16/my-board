@@ -9,10 +9,8 @@ const TaskCard = memo(
     const dispatch = useDispatch<AppDispatch>();
     const user = useSelector((state: RootState) => state.auth.user);
 
-    // Use local state so we don't spam the server on every keystroke!
     const [assigneeInput, setAssigneeInput] = useState(task.assignee || "");
 
-    // Sync local state if it updates from the socket
     useEffect(() => {
       setAssigneeInput(task.assignee || "");
     }, [task.assignee]);
@@ -20,9 +18,10 @@ const TaskCard = memo(
     const isAdmin = user?.role === "admin";
     const isAssignee = task.assignee === user?.email;
     const isUnassigned = !task.assignee;
+
+    // For marking complete or assigning
     const hasPermission = isAdmin || isAssignee || isUnassigned;
 
-    // Dispatch only when the user finishes typing and clicks away
     const handleAssigneeBlur = () => {
       if (assigneeInput.trim() !== (task.assignee || "")) {
         dispatch(
@@ -36,17 +35,19 @@ const TaskCard = memo(
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") e.currentTarget.blur(); // Trigger the blur event
+      if (e.key === "Enter") e.currentTarget.blur();
     };
 
     return (
       <div
-        draggable={hasPermission}
+        // ONLY ADMIN CAN DRAG AND MOVE TICKETS
+        draggable={isAdmin}
         onDragStart={() => dispatch(setDraggedTask({ boardId, taskIndex }))}
-        className={`${backgroundColor} p-3 rounded-lg ${hasPermission ? "cursor-move hover:shadow-md" : "opacity-75"} transition-all group flex flex-col gap-2`}
+        className={`${backgroundColor} p-3 rounded-lg ${isAdmin ? "cursor-move hover:shadow-md" : "opacity-90"} transition-all group flex flex-col gap-2`}
       >
         <div className="flex justify-between items-start gap-2">
           <div className="flex items-start gap-2 flex-1">
+            {/* ANYONE WITH PERMISSION CAN MARK COMPLETE */}
             <input
               type="checkbox"
               checked={task.completed}
@@ -60,7 +61,7 @@ const TaskCard = memo(
                 )
               }
               disabled={!hasPermission}
-              className="mt-1 cursor-pointer w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+              className="mt-1 cursor-pointer w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 disabled:opacity-50"
             />
             <div className="flex-1">
               <p
@@ -78,7 +79,8 @@ const TaskCard = memo(
             </div>
           </div>
 
-          {hasPermission && (
+          {/* ONLY ADMIN CAN DELETE TICKETS */}
+          {isAdmin && (
             <button
               onClick={() => dispatch(deleteTask({ boardId, taskIndex }))}
               className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-sm font-bold transition-opacity shrink-0"
@@ -90,6 +92,7 @@ const TaskCard = memo(
         </div>
 
         <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between">
+          {/* ANYONE WITH PERMISSION CAN ASSIGN */}
           <input
             type="text"
             placeholder="Unassigned"
@@ -98,7 +101,7 @@ const TaskCard = memo(
             onBlur={handleAssigneeBlur}
             onKeyDown={handleKeyDown}
             disabled={!isAdmin && !isUnassigned && !isAssignee}
-            className="text-xs bg-transparent border-none p-0 focus:ring-0 text-gray-500 w-full disabled:bg-transparent"
+            className="text-xs bg-transparent border-none p-0 focus:ring-0 text-gray-500 w-full disabled:bg-transparent disabled:opacity-75"
           />
         </div>
       </div>

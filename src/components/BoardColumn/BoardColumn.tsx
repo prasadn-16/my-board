@@ -15,7 +15,6 @@ const BoardColumn = ({ boardId }: BoardColumnProps) => {
     (state: RootState) => state.board.draggedTask,
   );
 
-  // Grab the current user to check permissions
   const user = useSelector((state: RootState) => state.auth.user);
   const isAdmin = user?.role === "admin";
 
@@ -48,8 +47,9 @@ const BoardColumn = ({ boardId }: BoardColumnProps) => {
 
       <div className="flex flex-col gap-3 flex-1 overflow-y-auto min-h-[50px] pr-1">
         {board.tasks.map((task, index) => {
-          // VISIBILITY LOGIC: Admin sees all. Users only see tasks assigned to them.
-          const isVisible = isAdmin || task.assignee === user?.email;
+          // VISIBILITY LOGIC: Admins see all. Users see their tasks AND unassigned tasks.
+          const isVisible =
+            isAdmin || task.assignee === user?.email || !task.assignee;
 
           if (!isVisible) return null;
 
@@ -65,9 +65,12 @@ const BoardColumn = ({ boardId }: BoardColumnProps) => {
         })}
       </div>
 
-      <div className="shrink-0 pt-2 border-t border-gray-100 mt-2">
-        <AddTaskInput boardId={boardId} />
-      </div>
+      {/* ONLY ADMIN CAN CREATE TICKETS */}
+      {isAdmin && (
+        <div className="shrink-0 pt-2 border-t border-gray-100 mt-2">
+          <AddTaskInput boardId={boardId} />
+        </div>
+      )}
     </div>
   );
 };
