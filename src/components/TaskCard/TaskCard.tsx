@@ -1,5 +1,6 @@
 import { memo, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { v4 as uuidv4 } from "uuid";
 import type { AppDispatch, RootState } from "@/store/store";
 import { setDraggedTask, deleteTask, updateTask } from "@/store/boardSlice";
 import type { TaskCardProps } from "@/types/types";
@@ -19,8 +20,8 @@ const TaskCard = memo(
     const isAssignee = task.assignee === user?.email;
     const isUnassigned = !task.assignee;
 
-    // For marking complete or assigning
     const hasPermission = isAdmin || isAssignee || isUnassigned;
+    const isDraggable = isAdmin || isAssignee;
 
     const handleAssigneeBlur = () => {
       if (assigneeInput.trim() !== (task.assignee || "")) {
@@ -29,6 +30,7 @@ const TaskCard = memo(
             boardId,
             taskIndex,
             updates: { assignee: assigneeInput.trim() },
+            fallbackNewBoardId: uuidv4(),
           }),
         );
       }
@@ -40,14 +42,12 @@ const TaskCard = memo(
 
     return (
       <div
-        // ONLY ADMIN CAN DRAG AND MOVE TICKETS
-        draggable={isAdmin}
+        draggable={isDraggable}
         onDragStart={() => dispatch(setDraggedTask({ boardId, taskIndex }))}
-        className={`${backgroundColor} p-3 rounded-lg ${isAdmin ? "cursor-move hover:shadow-md" : "opacity-90"} transition-all group flex flex-col gap-2`}
+        className={`${backgroundColor} p-3 rounded-lg ${isDraggable ? "cursor-move hover:shadow-md" : "opacity-90"} transition-all group flex flex-col gap-2`}
       >
         <div className="flex justify-between items-start gap-2">
           <div className="flex items-start gap-2 flex-1">
-            {/* ANYONE WITH PERMISSION CAN MARK COMPLETE */}
             <input
               type="checkbox"
               checked={task.completed}
@@ -76,10 +76,27 @@ const TaskCard = memo(
                   {task.description}
                 </p>
               )}
+
+              {task.createdBy && (
+                <div className="flex items-center gap-1 mt-2.5 text-[10px] text-gray-400 font-medium bg-gray-100 w-fit px-1.5 py-0.5 rounded">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3 w-3"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Author: {task.createdBy.split("@")[0]}</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* ONLY ADMIN CAN DELETE TICKETS */}
           {isAdmin && (
             <button
               onClick={() => dispatch(deleteTask({ boardId, taskIndex }))}
@@ -92,7 +109,6 @@ const TaskCard = memo(
         </div>
 
         <div className="mt-2 pt-2 border-t border-gray-200 flex items-center justify-between">
-          {/* ANYONE WITH PERMISSION CAN ASSIGN */}
           <input
             type="text"
             placeholder="Unassigned"

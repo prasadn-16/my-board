@@ -9,11 +9,19 @@ interface MasterStatePayload {
   newTaskInputs: Record<string, { title: string; description: string; assignee: string }>;
 }
 
+// FIX: Replaced 'any' with a strict Type definition for the payload
 interface BoardAction {
   type: string;
   payload?: {
-    boardId?: string; title?: string; task?: { title: string }; updates?: { completed?: boolean; assignee?: string };
-    taskIndex?: number; fromSocket?: boolean; sourceBoardId?: string; targetBoardId?: string; [key: string]: unknown; 
+    boardId?: string;
+    title?: string;
+    task?: { title: string };
+    updates?: { completed?: boolean; assignee?: string };
+    taskIndex?: number;
+    fromSocket?: boolean;
+    sourceBoardId?: string;
+    targetBoardId?: string;
+    [key: string]: unknown;
   };
 }
 
@@ -46,8 +54,6 @@ export const socketMiddleware: Middleware = store => {
 
     const typedAction = action as BoardAction;
     
-    // FIX: We added 'board/addLog' and 'board/setLogs' to this list 
-    // so they never accidentally overwrite the server's master state!
     const isUIAction = [
       'board/updateNewTaskInput', 
       'board/startEditingTitle', 
@@ -55,7 +61,8 @@ export const socketMiddleware: Middleware = store => {
       'board/setDraggedTask',
       'board/setEntireBoardState',
       'board/addLog',
-      'board/setLogs'
+      'board/setLogs',
+      'board/setSearchQuery'
     ].includes(typedAction.type);
 
     const prevState = store.getState() as RootStateSubset;
