@@ -6,16 +6,14 @@ import type { AddTaskInputProps } from "@/types/types";
 
 const defaultInput = { title: "", description: "", assignee: "" };
 
-const AddTaskInput = ({ boardId }: AddTaskInputProps) => {
+const AddTaskInput = ({ boardId, targetAssignee }: AddTaskInputProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const value = useSelector(
     (state: RootState) => state.board.newTaskInputs[boardId] || defaultInput,
   );
 
-  // Grab the current user
   const user = useSelector((state: RootState) => state.auth.user);
   const isAdmin = user?.role === "admin";
-
   const isTitleEmpty = !value.title.trim();
 
   const submitTask = () => {
@@ -28,8 +26,13 @@ const AddTaskInput = ({ boardId }: AddTaskInputProps) => {
             title: value.title.trim(),
             description: value.description?.trim() || "",
             completed: false,
-            // AUTO-ASSIGN LOGIC: If admin, leave unassigned. If normal user, assign to them.
-            assignee: isAdmin ? null : user?.email || null,
+            assignee:
+              targetAssignee !== undefined
+                ? targetAssignee
+                : isAdmin
+                  ? null
+                  : user?.email || null,
+            createdBy: user?.email || "Anonymous",
           },
         }),
       );

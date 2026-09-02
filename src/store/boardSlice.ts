@@ -12,6 +12,7 @@ interface BoardState {
     string,
     { title: string; description: string; assignee: string }
   >;
+  searchQuery: string;
 }
 
 const initialState: BoardState = {
@@ -19,6 +20,7 @@ const initialState: BoardState = {
     {
       id: "1",
       title: "To Do",
+      createdBy: "system",
       tasks: [
         {
           id: uuidv4(),
@@ -26,6 +28,7 @@ const initialState: BoardState = {
           description: "Initialize Vite app",
           completed: false,
           assignee: null,
+          createdBy: "system",
         },
       ],
     },
@@ -35,6 +38,7 @@ const initialState: BoardState = {
   editingTitle: "",
   draggedTask: null,
   newTaskInputs: {},
+  searchQuery: "",
 };
 
 const boardSlice = createSlice({
@@ -61,12 +65,14 @@ const boardSlice = createSlice({
       action: PayloadAction<{
         id: string;
         title: string;
+        createdBy?: string;
         fromSocket?: boolean;
       }>,
     ) => {
       state.boards.push({
         id: action.payload.id,
         title: action.payload.title,
+        createdBy: action.payload.createdBy || "Anonymous",
         tasks: [],
       });
     },
@@ -134,15 +140,20 @@ const boardSlice = createSlice({
         targetBoardId: string;
         sourceBoardId: string;
         taskIndex: number;
+        newAssignee?: string | null;
         fromSocket?: boolean;
       }>,
     ) => {
-      const { sourceBoardId, targetBoardId, taskIndex } = action.payload;
+      const { sourceBoardId, targetBoardId, taskIndex, newAssignee } =
+        action.payload;
       const sourceBoard = state.boards.find((b) => b.id === sourceBoardId);
       const targetBoard = state.boards.find((b) => b.id === targetBoardId);
 
       if (sourceBoard && targetBoard) {
         const [taskToMove] = sourceBoard.tasks.splice(taskIndex, 1);
+        if (newAssignee !== undefined) {
+          taskToMove.assignee = newAssignee;
+        }
         targetBoard.tasks.push(taskToMove);
       }
       state.draggedTask = null;
@@ -173,16 +184,62 @@ const boardSlice = createSlice({
         boardId: string;
         taskIndex: number;
         updates: Partial<Task>;
+        fallbackNewBoardId?: string;
         fromSocket?: boolean;
       }>,
     ) => {
-      const board = state.boards.find((b) => b.id === action.payload.boardId);
-      if (board && board.tasks[action.payload.taskIndex]) {
-        board.tasks[action.payload.taskIndex] = {
-          ...board.tasks[action.payload.taskIndex],
-          ...action.payload.updates,
-        };
+      const { boardId, taskIndex, updates, fallbackNewBoardId } =
+        action.payload;
+      const board = state.boards.find((b) => b.id === boardId);
+      if (!board || !board.tasks[taskIndex]) return;
+
+      const task = board.tasks[taskIndex];
+      const newAssignee = updates.assignee;
+
+      // FIX: Ensure newAssignee is strictly a string to satisfy TypeScript
+      if (
+        typeof newAssignee === "string" &&
+        newAssignee.trim() !== "" &&
+        newAssignee !== task.assignee
+      ) {
+        const isGlobal = (b: Board) =>
+          !b.createdBy ||
+          b.createdBy === "system" ||
+          b.createdBy.toLowerCase().includes("admin") ||
+          b.createdBy === "Anonymous";
+        const isVisibleTo = (b: Board, email: string) =>
+          isGlobal(b) || b.createdBy === email;
+
+        if (!isVisibleTo(board, newAssignee)) {
+          // FIX: Use findIndex instead of find to prevent Redux Toolkit Draft errors
+          let targetBoardIndex = state.boards.findIndex(
+            (b) => b.title === board.title && isVisibleTo(b, newAssignee),
+          );
+
+          if (targetBoardIndex === -1 && fallbackNewBoardId) {
+            state.boards.push({
+              id: fallbackNewBoardId,
+              title: board.title,
+              createdBy: newAssignee,
+              tasks: [],
+            });
+            // Update the index to point to our newly pushed board
+            targetBoardIndex = state.boards.length - 1;
+          }
+
+          if (targetBoardIndex !== -1) {
+            const [taskToMove] = board.tasks.splice(taskIndex, 1);
+            Object.assign(taskToMove, updates);
+            state.boards[targetBoardIndex].tasks.push(taskToMove);
+            return;
+          }
+        }
       }
+
+      board.tasks[taskIndex] = {
+        ...board.tasks[taskIndex],
+        ...updates,
+      };
     },
     deleteTask: (
       state,
@@ -194,6 +251,10 @@ const boardSlice = createSlice({
     ) => {
       const board = state.boards.find((b) => b.id === action.payload.boardId);
       if (board) board.tasks.splice(action.payload.taskIndex, 1);
+    },
+
+    setSearchQuery: (state, action: PayloadAction<string>) => {
+      state.searchQuery = action.payload;
     },
   },
 });
@@ -213,6 +274,7 @@ export const {
   addTask,
   updateTask,
   deleteTask,
+  setSearchQuery,
 } = boardSlice.actions;
 
 export default boardSlice.reducer;

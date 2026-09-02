@@ -12,12 +12,14 @@ export interface Task {
   description: string;
   completed: boolean;
   assignee: string | null;
+  createdBy?: string;
 }
 
 export interface Board {
   id: string;
   title: string;
   tasks: Task[];
+  createdBy?: string;
 }
 
 export interface ActivityLog {
@@ -30,13 +32,17 @@ export interface ActivityLog {
 export interface BoardColumnProps {
   boardId: string;
   index: number;
+  filterMode?: "admin-workspace" | "user-workspace" | "standard";
+  targetEmail?: string | null;
 }
 export interface BoardHeaderProps {
   boardId: string;
   title: string;
+  createdBy?: string;
 }
 export interface AddTaskInputProps {
   boardId: string;
+  targetAssignee?: string | null;
 }
 export interface TaskCardProps {
   task: Task;
